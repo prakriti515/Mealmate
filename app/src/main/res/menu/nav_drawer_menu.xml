@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single" android:id="@+id/nav_main_group">
+        <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/ic_home"
+            android:title="Home"/>
+
+        <item
+            android:id="@+id/nav_add_recipe"
+            android:icon="@drawable/ic_cook"
+            android:title="Add Recipe"/>
+            
+        <item
+            android:id="@+id/nav_recipes"
+            android:icon="@drawable/ic_ingredients"
+            android:title="Recipe List"/>
+            
+        <item
+            android:id="@+id/nav_favorite_recipes"
+            android:icon="@drawable/ic_favorite"
+            android:title="Favorite Recipes"/>
+            
+        <item
+            android:id="@+id/nav_grocery"
+            android:icon="@drawable/ic_cart"
+            android:title="Grocery List"/>
+            
+        <item
+            android:id="@+id/nav_favorite_stores"
+            android:icon="@drawable/ic_map"
+            android:title="Favorite Stores"/>
+        <item
+            android:id="@+id/nav_notifications"
+            android:icon="@drawable/ic_notifications"
+            android:title="Notifications" />
+
+        <item
+            android:id="@+id/nav_profile"
+            android:icon="@drawable/ic_account"
+            android:title="Profile"/>
+    </group>
+    
+    <group android:id="@+id/nav_secondary_group">
+        <item
+            android:id="@+id/nav_sign_out"
+            android:icon="@drawable/ic_logout"
+            android:title="Sign Out"/>
+    </group>
+</menu> 

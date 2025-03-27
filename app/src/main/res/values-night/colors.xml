@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Color Palette (Based on Mealmate Logo - Night Mode) -->
+    <color name="primary">#FF5252</color>           <!-- Brighter Red for Dark Mode Visibility -->
+    <color name="primary_variant">#FF7B7B</color>   <!-- Lighter Red for Accents in Dark Mode -->
+    <color name="on_primary">#000000</color>        <!-- Black for Text on Bright Red -->
+    <color name="on_primary_variant">#121212</color> <!-- Very Dark Gray for Text on Light Red -->
+
+    <!-- Secondary Color Palette (Blues from Logo - Night Mode) -->
+    <color name="secondary">#4F6FE0</color>         <!-- Brighter Blue for Dark Mode -->
+    <color name="secondary_variant">#7986CB</color> <!-- Lighter Blue for Accents -->
+    <color name="on_secondary">#000000</color>      <!-- Black for Text on Blue -->
+
+    <!-- Tertiary Colors - Night Mode -->
+    <color name="tertiary">#FFD54F</color>          <!-- Brighter Gold for Dark Mode -->
+    <color name="on_tertiary">#000000</color>       <!-- Black for Text on Gold -->
+
+    <!-- Background and Surface - Night Mode -->
+    <color name="background">#121212</color>        <!-- Very Dark Gray Background -->
+    <color name="surface">#1E1E1E</color>           <!-- Dark Surface -->
+    <color name="on_surface">#EEEEEE</color>        <!-- Light Gray Text -->
+    <color name="on_surface_variant">#B0B0B0</color> <!-- Medium Light Gray Text -->
+
+    <!-- Gradient Background Colors - Night Mode -->
+    <color name="gradient_start">#FF5252</color>    <!-- Brighter Red Gradient Start -->
+    <color name="gradient_center">#FF1744</color>   <!-- Vibrant Red Gradient Center -->
+    <color name="gradient_end">#FF8A80</color>      <!-- Soft Red Gradient End -->
+
+    <!-- Meal Specific Gradient Colors - Night Mode -->
+    <color name="gradient_meal">#FF5252</color> <!-- Bright Red Start -->
+
+    <!-- State Colors - Night Mode -->
+    <color name="error">#CF6679</color>             <!-- Pink-Red for Error -->
+    <color name="on_error">#000000</color>          <!-- Black for Text on Error -->
+    <color name="success">#81C784</color>           <!-- Light Green for Success States -->
+    <color name="on_success">#000000</color>        <!-- Black for Text on Success -->
+
+    <!-- Neutral Colors - Night Mode -->
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Specific Food-Related Accent Colors - Night Mode -->
+    <color name="tomato_red">#FF5252</color>        <!-- Bright Red for Night Mode -->
+    <color name="chef_white">#F5F5F5</color>        <!-- Slightly Off-White -->
+    <color name="navy_accent">#4F6FE0</color>       <!-- Brighter Blue for Night Mode -->
+
+    <!-- Text Colors - Night Mode -->
+    <color name="text_primary">#F5F5F5</color>      <!-- Light Gray for Primary Text -->
+    <color name="text_secondary">#B0B0B0</color>    <!-- Medium Light Gray for Secondary Text -->
+
+    <!-- Interactive Colors - Night Mode -->
+    <color name="chip_selector">#4F6FE0</color>     <!-- Bright Blue for Interactive Elements -->
+    <color name="link_color">#FF5252</color>        <!-- Bright Red for Links -->
+
+    <!-- Overlay and Scrim - Night Mode -->
+    <color name="overlay">#80000000</color>         <!-- Semi-transparent Black -->
+</resources>

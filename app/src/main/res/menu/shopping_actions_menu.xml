@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_filter_purchased"
+        android:title="Show Purchased Items" />
+        
+    <item
+        android:id="@+id/action_filter_unpurchased"
+        android:title="Show Unpurchased Items" />
+        
+    <item
+        android:id="@+id/action_show_all"
+        android:title="Show All Items" />
+    
+    <item android:title=""
+        android:enabled="false" />
+        
+    <item
+        android:id="@+id/action_import_mealplan"
+        android:title="Import from Meal Plan" />
+        
+    <item
+        android:id="@+id/action_delegate_shopping"
+        android:title="Generate Shopping List" />
+</menu> 

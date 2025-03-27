@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <item
+        android:id="@+id/action_edit_recipe"
+        android:title="Edit Recipe"
+        android:icon="@drawable/ic_edit"
+        app:showAsAction="always" />
+        
+    <item
+        android:id="@+id/action_del_recipe"
+        android:title="Delete Recipe"
+        android:icon="@drawable/ic_delete"
+        app:showAsAction="always" />
+        
+    <item
+        android:id="@+id/action_share"
+        android:title="Share Recipe"
+        android:icon="@drawable/ic_share"
+        app:showAsAction="always" />
+</menu> 

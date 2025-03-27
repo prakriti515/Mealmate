@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Color Palette (Based on Mealmate Logo) -->
+    <color name="primary">#D80C0C</color>           <!-- Logo Red - Bold and Appetizing -->
+    <color name="primary_variant">#E53935</color>   <!-- Lighter Red - For Accents -->
+    <color name="on_primary">#FFFFFF</color>        <!-- White for Text on Red -->
+    <color name="on_primary_variant">#FFF8E8</color> <!-- Soft Cream for Contrast -->
+
+    <!-- Secondary Color Palette (Blues from Logo) -->
+    <color name="secondary">#1E3A8A</color>         <!-- Deep Blue from Logo Border -->
+    <color name="secondary_variant">#3949AB</color> <!-- Lighter Blue for Accents -->
+    <color name="secondary_light">#E3F2FD</color>   <!-- Very Light Blue for Backgrounds -->
+    <color name="on_secondary">#FFFFFF</color>      <!-- White for Text on Blue -->
+
+    <!-- Tertiary Colors -->
+    <color name="tertiary">#D4AF37</color>          <!-- Warm Gold for Culinary Feel -->
+    <color name="on_tertiary">#2D2D2D</color>       <!-- Dark Gray for Text on Gold -->
+
+    <!-- Background and Surface -->
+    <color name="background">#F5F5F5</color>        <!-- Very Light Gray Background -->
+    <color name="surface">#FFFFFF</color>           <!-- Pure White Surface -->
+    <color name="on_surface">#333333</color>        <!-- Dark Gray Text -->
+    <color name="on_surface_variant">#757575</color> <!-- Medium Gray Text -->
+
+    <!-- Gradient Background Colors -->
+    <color name="gradient_start">#D80C0C</color>    <!-- Logo Red Gradient Start -->
+    <color name="gradient_center">#C62828</color>   <!-- Deeper Red Gradient Center -->
+    <color name="gradient_end">#FFFFFF</color>      <!-- Brighter Red Gradient End -->
+    <color name="gradient_splash">#fc6565</color>   <!-- Splash Red Gradient Start -->
+
+    <!-- Meal Specific Gradient Colors -->
+    <color name="gradient_meal">#D80C0C</color>      <!-- Red Start -->
+
+    <!-- State Colors -->
+    <color name="error">#B71C1C</color>             <!-- Deep Dark Red -->
+    <color name="on_error">#FFFFFF</color>          <!-- White -->
+    <color name="success">#2E7D32</color>           <!-- Green for Success States -->
+    <color name="on_success">#FFFFFF</color>        <!-- White -->
+
+    <!-- Neutral Colors -->
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Specific Food-Related Accent Colors -->
+    <color name="tomato_red">#D80C0C</color>        <!-- Matches Logo Red -->
+    <color name="chef_white">#FFFFFF</color>        <!-- Pure White like Chef's Uniform -->
+    <color name="navy_accent">#1E3A8A</color>       <!-- Deep Blue from Logo -->
+
+    <!-- Text Colors -->
+    <color name="text_primary">#2D2D2D</color>      <!-- Deep Gray for Primary Text -->
+    <color name="text_secondary">#616161</color>    <!-- Medium Gray for Secondary Text -->
+
+    <!-- Interactive Colors -->
+    <color name="chip_selector">#1E3A8A</color>     <!-- Blue for Interactive Elements -->
+    <color name="link_color">#D80C0C</color>        <!-- Red for Links -->
+
+    <!-- Overlay and Scrim -->
+    <color name="overlay">#80000000</color>         <!-- Semi-transparent Black -->
+
+    <color name="colorPrimary">#FF6200EE</color>
+    <color name="colorPrimaryDark">#FF3700B3</color>
+    <color name="colorAccent">#FF03DAC5</color>
+    <color name="colorOnSurface">#000000</color>
+
+    <color name="light_primary">#E3F2FD</color>
+</resources>

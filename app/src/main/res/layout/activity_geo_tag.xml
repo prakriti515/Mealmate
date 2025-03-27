@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="16dp">
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Store Details"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary"
+            android:layout_gravity="center"
+            android:paddingBottom="12dp" />
+
+        <!-- Store Name Input -->
+        <EditText
+            android:id="@+id/storeNameInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Store Name"
+            android:inputType="text"
+            android:maxLines="1"
+            android:padding="12dp"
+            android:background="@drawable/input_background"
+            android:textColor="@color/black"
+            app:hintTextColor="@color/on_surface_variant"
+            />
+
+        <!-- Address Input -->
+        <EditText
+            android:id="@+id/addressInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Address"
+            android:inputType="text"
+            android:maxLines="1"
+            android:padding="12dp"
+            android:background="@drawable/input_background"
+            android:textColor="@color/black"
+            app:hintTextColor="@color/on_surface_variant" />
+
+        <!-- Lat/Long Text -->
+        <TextView
+            android:id="@+id/latLongText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Lat: 0.0, Long: 0.0"
+            android:textSize="14sp"
+            android:textColor="@color/black" />
+
+        <!-- Category and Ingredients Section -->
+        <TextView
+            android:id="@+id/categoryTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Available Ingredients"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/primary" />
+
+        <!-- ExpandableListView -->
+        <edu.prakriti.mealmate.utils.CustomExpandableListView
+            android:id="@+id/expandableCategoryList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:divider="@null"
+            android:dividerHeight="0dp"
+            android:nestedScrollingEnabled="true"
+            android:background="@drawable/list_background" />
+
+        <!-- Add New Ingredient Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:layout_marginTop="12dp">
+
+            <EditText
+                android:id="@+id/newIngredientInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="@string/hint_missing_ingredient"
+                android:textSize="16sp"
+                android:padding="12dp"
+                android:background="@drawable/input_background"
+                android:textColor="@color/black"
+                app:hintTextColor="@color/on_surface_variant" />
+
+            <Button
+                android:id="@+id/addIngredientButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add_ingredient"
+                android:textSize="16sp"
+                android:padding="12dp"
+                android:backgroundTint="@color/secondary"
+                android:textColor="@color/on_secondary"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- Save Button -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            android:layout_marginBottom="16dp">
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="*Make sure to select items available at this store"
+                    android:textColor="@color/primary"
+                    android:textStyle="italic"
+                    android:gravity="center"
+                    android:layout_marginBottom="8dp"/>
+                
+                <Button
+                    android:id="@+id/saveStoreButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Save Store"
+                    android:textColor="@color/white"
+                    android:backgroundTint="@color/primary"
+                    android:padding="12dp"
+                    android:textSize="16sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

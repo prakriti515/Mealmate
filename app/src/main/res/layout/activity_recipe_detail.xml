@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface">
+
+    <!-- App Bar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:elevation="0dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/primary"
+            android:elevation="4dp"
+            app:title="Recipe Details"
+            app:titleTextColor="@color/white"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Navigation indicators for recipe browsing -->
+    <LinearLayout
+        android:id="@+id/recipe_navigation_indicators"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="8dp"
+        android:layout_margin="8dp"
+        android:background="@drawable/rounded_border_bg"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_marginTop="8dp">
+        
+        <TextView
+            android:id="@+id/prev_recipe_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/ic_arrow_back"
+            android:text="Previous Recipe"
+            android:textColor="@color/primary"
+            android:drawablePadding="4dp"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackground"
+            android:visibility="gone"/>
+            
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1"/>
+            
+        <TextView
+            android:id="@+id/next_recipe_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableEnd="@drawable/ic_arrow_forward"
+            android:text="Next Recipe"
+            android:textColor="@color/primary"
+            android:drawablePadding="4dp"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackground"
+            android:visibility="gone"/>
+    </LinearLayout>
+
+    <!-- Scrollable Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="56dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Hero Image -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp"
+                android:layout_marginBottom="16dp">
+                
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    
+                    <ImageView
+                        android:id="@+id/recipeImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="225dp"
+                        android:background="@color/on_surface"
+                        android:scaleType="centerCrop" />
+                    
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/uploadImageButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignEnd="@id/recipeImage"
+                        android:layout_alignBottom="@id/recipeImage"
+                        android:layout_margin="16dp"
+                        android:contentDescription="Upload image"
+                        app:fabSize="mini"
+                        android:src="@drawable/ic_camera"
+                        app:tint="@color/white" />
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Recipe Name -->
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/recipeName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Recipe Name"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/on_surface"
+                android:gravity="start"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Recipe Details -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp"
+                android:layout_marginBottom="16dp">
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <!-- Cook Time -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            app:tint="@color/primary"
+                            android:src="@drawable/ic_time" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/cookTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="30 mins"
+                            android:textSize="14sp"
+                            android:textColor="@color/on_surface_variant"
+                            android:gravity="center"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Ingredients Section -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp"
+                android:layout_marginBottom="16dp">
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Ingredients"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Dynamic Container for Ingredients -->
+                    <LinearLayout
+                        android:id="@+id/ingredientsContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Step-by-Step Instructions Section -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="3dp"
+                android:layout_marginBottom="16dp">
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Instructions"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="8dp" />
+                    
+                    <!-- Step Indicator -->
+                    <TextView
+                        android:id="@+id/step_indicator"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Step 1 of 3"
+                        android:textColor="@color/on_surface_variant"
+                        android:layout_marginBottom="8dp" />
+                        
+                    <!-- Progress Indicator -->
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progress_indicator"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:indicatorColor="@color/secondary"
+                        app:trackColor="@color/on_surface_variant" />
+
+                    <!-- ViewPager2 for Instructions -->
+                    <androidx.viewpager2.widget.ViewPager2
+                        android:id="@+id/instructionsViewPager"
+                        android:layout_width="match_parent"
+                        android:layout_height="350dp"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Navigation Buttons -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center">
+
+                        <!-- Previous Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/prevButton"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Previous"
+                            android:layout_marginEnd="8dp" />
+
+                        <!-- Next Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/nextButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Next"
+                            android:backgroundTint="@color/secondary" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

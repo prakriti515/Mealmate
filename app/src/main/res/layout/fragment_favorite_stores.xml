@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <!-- Create a top app bar for better UI organization -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/background"
+        app:elevation="0dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/titleText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Favorite Stores"
+                android:textColor="@color/on_surface"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/addFavStoreButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add Store"
+                android:textSize="14sp"
+                android:minHeight="40dp"
+                app:icon="@drawable/ic_add"
+                app:iconSize="18dp"
+                app:iconGravity="textStart"
+                app:cornerRadius="20dp"
+                android:paddingHorizontal="16dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/actionButtonsLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/titleText">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/filterStoresChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Filter"
+                    app:chipIcon="@drawable/ic_filter"
+                    android:textSize="12sp"
+                    app:chipMinHeight="32dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/viewMapChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View Map"
+                    app:chipIcon="@drawable/ic_explore"
+                    android:layout_marginStart="8dp"
+                    android:textSize="12sp"
+                    app:chipMinHeight="32dp" />
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Main content without swipe refresh temporarily -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/favStoresRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="16dp" />
+
+            <!-- Empty State View -->
+            <LinearLayout
+                android:id="@+id/emptyStateView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone">
+                
+                <ImageView
+                    android:layout_width="140dp"
+                    android:layout_height="140dp"
+                    android:src="@drawable/no_image_placeholder"
+                    android:contentDescription="No stores available"
+                    android:alpha="0.5"/>
+                    
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No Favorite Stores"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="16dp"/>
+                    
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add your favorite grocery stores to help with your meal planning"
+                    android:textSize="16sp"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginHorizontal="32dp"/>
+                    
+                <Button
+                    android:id="@+id/emptyStateAddButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add Store"
+                    android:layout_marginTop="24dp"
+                    android:backgroundTint="@color/primary"
+                    android:paddingHorizontal="32dp"
+                    android:paddingVertical="12dp"
+                    app:icon="@drawable/ic_add"
+                    app:iconGravity="textStart"/>
+            </LinearLayout>
+        </FrameLayout>
+    </FrameLayout>
+
+    <!-- Loading indicator that overlays content -->
+    <FrameLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/primary"/>
+    </FrameLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout> 
