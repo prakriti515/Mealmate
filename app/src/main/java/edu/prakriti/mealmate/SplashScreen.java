@@ -15,7 +15,7 @@ import edu.prakriti.mealmate.R;
 
 public class SplashScreen extends AppCompatActivity {
 
-    private static final int SPLASH_DELAY = 1000; // 3 seconds delay
+    private static final int SPLASH_DELAY = 1000;    // 3 seconds delay
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

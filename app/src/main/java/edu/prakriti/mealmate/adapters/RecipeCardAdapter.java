@@ -83,6 +83,7 @@ public class RecipeCardAdapter extends RecyclerView.Adapter<RecipeCardAdapter.Re
         
         // Create a single click listener for better code organization
         View.OnClickListener recipeClickListener = v -> {
+            android.util.Log.d("RecipeCardAdapter", "Recipe clicked: " + recipe.getRecipeName() + ", ID: " + recipe.getRecipeId());
             openRecipeDetail(recipe);
         };
         
@@ -91,7 +92,10 @@ public class RecipeCardAdapter extends RecyclerView.Adapter<RecipeCardAdapter.Re
         
         // Also set the button click listener for consistency
         if (holder.recipeBtn != null) {
+            android.util.Log.d("RecipeCardAdapter", "Setting up recipeBtn click listener");
             holder.recipeBtn.setOnClickListener(recipeClickListener);
+        } else {
+            android.util.Log.e("RecipeCardAdapter", "recipeBtn is null - could not set listener");
         }
     }
     
@@ -100,6 +104,12 @@ public class RecipeCardAdapter extends RecyclerView.Adapter<RecipeCardAdapter.Re
      */
     private void openRecipeDetail(Recipe recipe) {
         Intent intent = new Intent(context, RecipeDetailActivity.class);
+        
+        // Pass the recipe ID to ensure the recipe is properly fetched from Firebase
+        // even if the parcelable object doesn't contain all data
+        intent.putExtra("RECIPE_ID", recipe.getRecipeId());
+        
+        // Also pass the Recipe object as a backup
         intent.putExtra("RECIPE", recipe);
         
         // Add transition animation
@@ -213,13 +223,35 @@ public class RecipeCardAdapter extends RecyclerView.Adapter<RecipeCardAdapter.Re
         
         public RecipeViewHolder(@NonNull View itemView) {
             super(itemView);
+            
+            android.util.Log.d("RecipeCardAdapter", "Initializing ViewHolder");
+            
+            // Find views with proper error handling
             recipeImage = itemView.findViewById(R.id.recipeImage);
+            if (recipeImage == null) android.util.Log.e("RecipeCardAdapter", "Failed to find recipeImage");
+            
             recipeName = itemView.findViewById(R.id.recipeTitle);
+            if (recipeName == null) android.util.Log.e("RecipeCardAdapter", "Failed to find recipeTitle");
+            
             totalIngredients = itemView.findViewById(R.id.recipeIngredients);
+            if (totalIngredients == null) android.util.Log.e("RecipeCardAdapter", "Failed to find recipeIngredients");
+            
             totalInstructions = itemView.findViewById(R.id.recipeSteps);
+            if (totalInstructions == null) android.util.Log.e("RecipeCardAdapter", "Failed to find recipeSteps");
+            
             cookTime = itemView.findViewById(R.id.recipeCookTime);
+            if (cookTime == null) android.util.Log.e("RecipeCardAdapter", "Failed to find recipeCookTime");
+            
+            // Find the recipe button properly - note it's recipeButton in layout, not recipe_button
             recipeBtn = itemView.findViewById(R.id.recipeButton);
+            if (recipeBtn == null) {
+                android.util.Log.e("RecipeCardAdapter", "Failed to find recipeButton - check the ID in layout XML");
+            } else {
+                android.util.Log.d("RecipeCardAdapter", "Successfully found recipeButton");
+            }
+            
             menuButton = itemView.findViewById(R.id.recipe_menu_button);
+            if (menuButton == null) android.util.Log.e("RecipeCardAdapter", "Failed to find recipe_menu_button");
         }
     }
 }

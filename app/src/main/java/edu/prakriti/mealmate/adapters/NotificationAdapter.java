@@ -3,6 +3,7 @@ package edu.prakriti.mealmate.adapters;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import android.widget.Toast;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -101,34 +102,36 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
     
     private void openRecipeDetail(Notification notification) {
-        // Fetch recipe details and open RecipeDetailActivity
-        db.collection("recipes")
-            .whereEqualTo("recipeId", notification.getRecipeId())
-            .get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
-                if (!queryDocumentSnapshots.isEmpty()) {
-                    // Get recipe
-                    edu.prakriti.mealmate.model.Recipe recipe = 
-                            queryDocumentSnapshots.getDocuments().get(0).toObject(edu.prakriti.mealmate.model.Recipe.class);
-                    
-                    // Open recipe detail
-                    Intent intent = new Intent(context, RecipeDetailActivity.class);
-                    intent.putExtra("RECIPE", recipe);
-                    
-                    // Add transition animation
-                    if (context instanceof android.app.Activity) {
-                        android.app.Activity activity = (android.app.Activity) context;
-                        android.app.ActivityOptions options = android.app.ActivityOptions
-                            .makeCustomAnimation(context, R.anim.slide_in_right, R.anim.slide_out_left);
-                        activity.startActivity(intent, options.toBundle());
-                    } else {
-                        context.startActivity(intent);
-                    }
-                }
-            })
-            .addOnFailureListener(e -> {
-                Log.e("NotificationAdapter", "Error fetching recipe: " + e.getMessage());
-            });
+        // Open RecipeDetailActivity directly using recipeId
+        if (notification.getRecipeId() != null && !notification.getRecipeId().isEmpty()) {
+            Intent intent = new Intent(context, RecipeDetailActivity.class);
+            
+            // Pass the recipe ID - this will cause the activity to fetch the latest data
+            intent.putExtra("RECIPE_ID", notification.getRecipeId());
+            
+            // If recipe name is available, pass it for display while loading
+            if (notification.getRecipeName() != null && !notification.getRecipeName().isEmpty()) {
+                // Create a minimal Recipe object with just the essential info
+                edu.prakriti.mealmate.model.Recipe minimalRecipe = new edu.prakriti.mealmate.model.Recipe();
+                minimalRecipe.setRecipeId(notification.getRecipeId());
+                minimalRecipe.setRecipeName(notification.getRecipeName());
+                intent.putExtra("RECIPE", minimalRecipe);
+            }
+            
+            Log.d("NotificationAdapter", "Opening recipe detail with ID: " + notification.getRecipeId());
+            
+            // Add transition animation
+            if (context instanceof android.app.Activity) {
+                android.app.Activity activity = (android.app.Activity) context;
+                activity.startActivity(intent);
+                activity.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            } else {
+                context.startActivity(intent);
+            }
+        } else {
+            Log.e("NotificationAdapter", "Cannot open recipe: No recipeId provided");
+            Toast.makeText(context, "Cannot open recipe: Details not available", Toast.LENGTH_SHORT).show();
+        }
     }
     
     private void openMealPlan() {

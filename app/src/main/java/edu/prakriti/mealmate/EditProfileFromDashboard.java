@@ -359,8 +359,8 @@ public class EditProfileFromDashboard extends AppCompatActivity {
                 e.printStackTrace();
             }
         } else {
-            // Default to 18 years old if no DOB is saved
-            calendar.set(Calendar.YEAR, currentYear - 18);
+            // Default to 15 years old if no DOB is saved
+            calendar.set(Calendar.YEAR, currentYear - 25);
         }
 
         year = calendar.get(Calendar.YEAR);

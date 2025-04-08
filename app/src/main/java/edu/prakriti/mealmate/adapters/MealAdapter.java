@@ -94,12 +94,33 @@ public class MealAdapter extends RecyclerView.Adapter<MealAdapter.MealViewHolder
         holder.itemMealCard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                android.util.Log.d("MealAdapter", "Meal clicked: " + meal.getMealName());
                 Intent intent = new Intent(context, RecipeDetailActivity.class);
-
-                intent.putExtra("RECIPE", meal.getRecipe());
-
-                // Start the activity
-                context.startActivity(intent);
+                
+                // Get the recipe from the meal
+                edu.prakriti.mealmate.model.Recipe recipe = meal.getRecipe();
+                
+                if (recipe != null) {
+                    android.util.Log.d("MealAdapter", "Recipe ID: " + recipe.getRecipeId());
+                    
+                    // Pass the recipe ID to ensure the activity fetches fresh data from Firebase
+                    intent.putExtra("RECIPE_ID", recipe.getRecipeId());
+                    
+                    // Also pass the Recipe object as a backup
+                    intent.putExtra("RECIPE", recipe);
+                    
+                    // Start the activity with a transition animation
+                    if (context instanceof android.app.Activity) {
+                        android.app.Activity activity = (android.app.Activity) context;
+                        activity.startActivity(intent);
+                        activity.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                    } else {
+                        context.startActivity(intent);
+                    }
+                } else {
+                    android.util.Log.e("MealAdapter", "Recipe is null for meal: " + meal.getMealName());
+                    android.widget.Toast.makeText(context, "Error: Recipe data not available", android.widget.Toast.LENGTH_SHORT).show();
+                }
             }
         });
 

@@ -14,6 +14,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -45,6 +46,9 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Load theme preference before inflating UI
+        loadSavedTheme();
+        
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_dashboard);
@@ -72,10 +76,27 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
             progressIndicator.setProgress(0);
         }
 
+        // Set the initial state of the dark mode toggle
+        boolean isDarkMode = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES;
+        Menu navMenu = navigationView.getMenu();
+        MenuItem darkModeItem = navMenu.findItem(R.id.nav_dark_mode);
+        if (darkModeItem != null) {
+            darkModeItem.setChecked(isDarkMode);
+        }
+
         loadLocalProfile(); // Load User Profile Data
 
         // Handle intent extras
         handleIntentExtras(navigationView, savedInstanceState);
+    }
+    
+    /**
+     * Load the saved theme preference
+     */
+    private void loadSavedTheme() {
+        SharedPreferences sharedPreferences = getSharedPreferences("AppThemePrefs", MODE_PRIVATE);
+        int savedMode = sharedPreferences.getInt("NightMode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        AppCompatDelegate.setDefaultNightMode(savedMode);
     }
     
     /**
@@ -138,6 +159,10 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
         } else if (itemId == R.id.nav_notifications) {
             // Launch standalone notifications activity 
             launchNotificationsActivity();
+        } else if (itemId == R.id.nav_dark_mode) {
+            // Toggle dark mode
+            toggleDarkMode(item);
+            return true; // Return without closing drawer to show the change
         } else if (itemId == R.id.nav_sign_out) {
             signOutUser();
             return true; // Return true to indicate we've handled this event
@@ -289,5 +314,30 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
         }
         
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Toggle between light and dark mode
+     * @param item The menu item that was clicked
+     */
+    private void toggleDarkMode(MenuItem item) {
+        // Check current night mode
+        boolean isDarkMode = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES;
+        
+        // Toggle to opposite mode
+        int newMode = isDarkMode ? AppCompatDelegate.MODE_NIGHT_NO : AppCompatDelegate.MODE_NIGHT_YES;
+        AppCompatDelegate.setDefaultNightMode(newMode);
+        
+        // Update menu item check state
+        item.setChecked(!isDarkMode);
+        
+        // Save preference
+        SharedPreferences sharedPreferences = getSharedPreferences("AppThemePrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt("NightMode", newMode);
+        editor.apply();
+        
+        // Show toast message
+        Toast.makeText(this, isDarkMode ? "Light mode enabled" : "Dark mode enabled", Toast.LENGTH_SHORT).show();
     }
 }

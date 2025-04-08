@@ -1,21 +1,29 @@
 package edu.prakriti.mealmate.fragments;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -27,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,6 +63,8 @@ public class FavoriteStoresFragment extends Fragment {
     private View view;
     private View emptyStateView;
     private View loadingOverlay;
+
+    private double userLat, userLon;
     // Comment out SwipeRefreshLayout until dependency is added
     // private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefreshLayout;
     
@@ -103,7 +114,7 @@ public class FavoriteStoresFragment extends Fragment {
         
         // Initialize location client
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-        
+        requestLocationPermission();
         // Set up the RecyclerView
         favStoreRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
         
@@ -136,7 +147,43 @@ public class FavoriteStoresFragment extends Fragment {
         
         return view;
     }
-    
+
+    private void requestLocationPermission() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            getUserLocation();
+        } else {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+    }
+
+    // Handle Permission Result
+    private final ActivityResultLauncher<String> locationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    getUserLocation();
+                } else {
+                    Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+    @SuppressLint("MissingPermission") // We check permission before calling this
+    private void getUserLocation() {
+        fusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                if (location != null) {
+                    userLat = location.getLatitude();
+                    userLon = location.getLongitude();
+                    Log.d("FavoriteStoresFragment", "User Location: Lat=" + userLat + ", Lon=" + userLon);
+                } else {
+                    Log.e("FavoriteStoresFragment", "Failed to get location");
+                }
+            }
+        });
+    }
+
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -485,8 +532,11 @@ public class FavoriteStoresFragment extends Fragment {
      */
     private void processDocuments(List<DocumentSnapshot> documents, List<String> groceryItems) {
         // Clear the list before processing
+        getUserLocation();
         storeList.clear();
-        
+
+
+
         Log.d("FavoriteStoresFragment", "Processing " + documents.size() + " documents");
         
         // Use a map to temporarily store documents by ID to prevent duplicates
@@ -521,9 +571,7 @@ public class FavoriteStoresFragment extends Fragment {
                 
                 // Get distance (default to 0 km)
                 String distance = getString(data, "distance");
-                if (distance == null || distance.isEmpty()) {
-                    distance = "0.0 km";
-                }
+
                 
                 // Try to get latitude and longitude directly
                 Double latitude = getDouble(data, "latitude");
@@ -531,6 +579,7 @@ public class FavoriteStoresFragment extends Fragment {
                 
                 // If not available, try to parse from latLong string
                 if (latitude == null || longitude == null) {
+
                     String latLong = getString(data, "latLong");
                     if (latLong != null && !latLong.isEmpty()) {
                         try {
@@ -541,6 +590,23 @@ public class FavoriteStoresFragment extends Fragment {
                             Log.e("FavoriteStoresFragment", "Error parsing latLong: " + latLong, e);
                         }
                     }
+                }
+
+                if (distance == null || distance.isEmpty()) {
+                    distance = "0.0 km";
+                }
+
+                else {
+                    double dist = calculateDistance(userLat, userLon, latitude, longitude);
+                    if (dist < 1) {
+                        distance = (int) (dist * 1000) + " m";  // Convert to meters
+                    } else {
+                        distance = String.format(Locale.US, "%.1f km", dist);  // Show in km with 1 decimal place
+                    }
+
+
+
+
                 }
                 
                 // Get ingredients - try both fields for compatibility
@@ -624,6 +690,18 @@ public class FavoriteStoresFragment extends Fragment {
             inspectStoreAdapter();
         });
     }
+
+
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371; // Radius of the Earth in km
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // Distance in km
+    }
     
     // Helper methods for safe data extraction
     private String getString(Map<String, Object> data, String key) {
@@ -681,15 +759,19 @@ public class FavoriteStoresFragment extends Fragment {
     
     private void sortStoresByDistance() {
         if (storeList.size() > 1) {
-            storeList.sort((store1, store2) -> {
-                // Parse distances (remove units and convert to double)
-                double dist1 = parseDistance(store1.getDistance());
-                double dist2 = parseDistance(store2.getDistance());
-                return Double.compare(dist1, dist2);
-            });
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                storeList.sort((store1, store2) -> {
+                    // Parse distances (remove units and convert to double)
+                    double dist1 = parseDistance(store1.getDistance());
+                    double dist2 = parseDistance(store2.getDistance());
+                    return Double.compare(dist1, dist2);
+                });
+            }
             storeAdapter.notifyDataSetChanged();
         }
     }
+
+
     
     private double parseDistance(String distance) {
         try {

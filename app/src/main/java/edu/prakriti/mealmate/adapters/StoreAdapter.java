@@ -118,7 +118,7 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.StoreViewHol
             noIngredientsText.setText("No ingredients listed for this store");
             noIngredientsText.setPadding(24, 12, 24, 12);
             noIngredientsText.setTextSize(14);
-            noIngredientsText.setTextColor(context.getColor(R.color.on_surface));
+            noIngredientsText.setTextColor(context.getColor(R.color.white));
             holder.gridContainer.addView(noIngredientsText);
             Log.d("StoreAdapter", "Added 'No ingredients' text view");
         } else {
@@ -137,7 +137,7 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.StoreViewHol
                     Log.d("StoreAdapter", "Added matched ingredient chip: " + ingredient);
                 } else {
                     chip.setBackground(context.getDrawable(R.drawable.chip_background));
-                    chip.setTextColor(context.getColor(R.color.on_surface));
+                    chip.setTextColor(context.getColor(R.color.white));
                     Log.d("StoreAdapter", "Added regular ingredient chip: " + ingredient);
                 }
 

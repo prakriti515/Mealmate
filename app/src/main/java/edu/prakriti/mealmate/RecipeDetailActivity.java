@@ -16,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.content.ContentValues;
 import android.graphics.Bitmap;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
@@ -52,6 +53,8 @@ import edu.prakriti.mealmate.home.MainActivity;
 import edu.prakriti.mealmate.model.Recipe;
 
 import android.view.GestureDetector;
+
+import androidx.annotation.NonNull;
 
 public class RecipeDetailActivity extends AppCompatActivity {
 
@@ -93,6 +96,9 @@ public class RecipeDetailActivity extends AppCompatActivity {
         
         // Debug log for activity creation
         Log.d("RecipeDetailActivity", "onCreate started");
+        
+        // Check for notification permission on Android 13+
+        checkNotificationPermission();
         
         // Log all intent extras for debugging
         Bundle extras = getIntent().getExtras();
@@ -137,8 +143,18 @@ public class RecipeDetailActivity extends AppCompatActivity {
         Log.d("RecipeDetailActivity", "Intent data - Recipe: " + (recipe != null ? "present" : "null") 
                 + ", RecipeID: " + (recipeId != null ? recipeId : "null"));
         
-        if (recipe != null) {
-            // Recipe already provided as Parcelable
+        // Additional debug logging to track the source
+        if (getIntent().hasExtra("RECIPE") && recipe != null) {
+            Log.d("RecipeDetailActivity", "Recipe from intent: " + recipe.getRecipeName() + ", ID: " + recipe.getRecipeId());
+        }
+        
+        // Always prioritize loading from Firestore if we have a recipe ID
+        if (recipeId != null) {
+            Log.d("RecipeDetailActivity", "Starting to fetch recipe from Firebase with ID: " + recipeId);
+            // Fetch fresh data from Firestore by ID
+            fetchRecipeFromFirestore(recipeId);
+        } else if (recipe != null) {
+            // Recipe provided as Parcelable and no ID available
             Log.d("RecipeDetailActivity", "Loading recipe from Parcelable: " + recipe.getRecipeName());
             
             // Detailed log of the Recipe object
@@ -150,18 +166,8 @@ public class RecipeDetailActivity extends AppCompatActivity {
                     ", Ingredients count=" + (recipe.getIngredients() != null ? recipe.getIngredients().size() : 0) +
                     ", Instructions count=" + (recipe.getInstructions() != null ? recipe.getInstructions().size() : 0));
             
-            // If recipeId is present but not set in the Recipe object, set it
-            if (recipeId != null && (recipe.getRecipeId() == null || recipe.getRecipeId().isEmpty())) {
-                Log.d("RecipeDetailActivity", "Setting recipe ID from intent: " + recipeId);
-                recipe.setRecipeId(recipeId);
-            }
-            
             // Initialize UI with provided recipe
             initializeRecipeUI();
-        } else if (recipeId != null) {
-            // Need to fetch recipe from Firestore by ID
-            Log.d("RecipeDetailActivity", "Fetching recipe with ID: " + recipeId);
-            fetchRecipeFromFirestore(recipeId);
         } else {
             // No recipe data available
             Log.e("RecipeDetailActivity", "No recipe data or ID provided");
@@ -1326,8 +1332,11 @@ public class RecipeDetailActivity extends AppCompatActivity {
             editor.putString(reminderKey, reminderData.toString());
             editor.apply();
             
-            // Add to notification center
+            // Add to notification center and show instant notification
             addToNotificationCenter(day, mealType);
+            
+            // Show instant user notification
+            showRecipeReminderNotification(day, mealType);
             
         } catch (Exception e) {
             Log.e("RecipeDetailActivity", "Error creating reminder: " + e.getMessage());
@@ -1336,10 +1345,27 @@ public class RecipeDetailActivity extends AppCompatActivity {
     
     private void addToNotificationCenter(String day, String mealType) {
         // Add notification for this reminder to the Firestore notifications collection
-        if (userId == null || db == null) return;
+        if (userId == null || db == null) {
+            Log.e("RecipeDetailActivity", "Cannot add notification: userId or db is null. userId: " + userId);
+            Toast.makeText(this, "Cannot create notification: User not logged in", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        Log.d("RecipeDetailActivity", "Adding notification to Firestore for userId: " + userId);
+        
+        // Ensure recipe has required data
+        if (recipe == null || recipe.getRecipeId() == null || recipe.getRecipeName() == null) {
+            Log.e("RecipeDetailActivity", "Cannot add notification: Recipe is missing data. Recipe: " + 
+                  (recipe != null ? "ID=" + recipe.getRecipeId() + ", Name=" + recipe.getRecipeName() : "null"));
+            Toast.makeText(this, "Cannot create notification: Recipe data incomplete", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Create string-only copy of userId to ensure exact field equality when querying
+        String userIdString = userId;
         
         Map<String, Object> notification = new HashMap<>();
-        notification.put("userId", userId);
+        notification.put("userId", userIdString);
         notification.put("title", "Recipe Reminder");
         notification.put("message", recipe.getRecipeName() + " planned for " + mealType + " on " + day);
         notification.put("recipeName", recipe.getRecipeName());
@@ -1349,14 +1375,160 @@ public class RecipeDetailActivity extends AppCompatActivity {
         notification.put("day", day);
         notification.put("mealType", mealType);
         
+        // Log notification data for debugging
+        Log.d("RecipeDetailActivity", "Notification data being saved: " + notification);
+        
+        // Check if we already have this notification to avoid duplicates
         db.collection("notifications")
-            .add(notification)
-            .addOnSuccessListener(documentReference -> {
-                Log.d("RecipeDetailActivity", "Notification added with ID: " + documentReference.getId());
+            .whereEqualTo("userId", userIdString)
+            .whereEqualTo("recipeId", recipe.getRecipeId())
+            .whereEqualTo("day", day)
+            .whereEqualTo("mealType", mealType)
+            .get()
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                Log.d("RecipeDetailActivity", "Query for existing notifications returned " + 
+                      queryDocumentSnapshots.size() + " results");
+                
+                if (queryDocumentSnapshots.isEmpty()) {
+                    // No existing notification with the same parameters, add a new one
+                    db.collection("notifications")
+                        .add(notification)
+                        .addOnSuccessListener(documentReference -> {
+                            Log.d("RecipeDetailActivity", "✅ Notification added with ID: " + documentReference.getId());
+                            Toast.makeText(this, "Recipe added to " + mealType + " on " + day, Toast.LENGTH_SHORT).show();
+                            
+                            // Ask user if they want to view notifications
+                            new android.app.AlertDialog.Builder(this)
+                                .setTitle("Notification Created")
+                                .setMessage("Recipe has been added to your meal plan. Would you like to view your notifications?")
+                                .setPositiveButton("View Notifications", (dialog, which) -> {
+                                    // Navigate to notifications screen
+                                    navigateToNotifications();
+                                })
+                                .setNegativeButton("Continue", (dialog, which) -> dialog.dismiss())
+                                .show();
+                            
+                            // Reload the NotificationsFragment if it's visible
+                            reloadNotificationsFragmentIfVisible();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("RecipeDetailActivity", "Error adding notification: " + e.getMessage(), e);
+                            Toast.makeText(this, "Error adding notification", Toast.LENGTH_SHORT).show();
+                        });
+                } else {
+                    // Update the existing notification with a new timestamp
+                    String docId = queryDocumentSnapshots.getDocuments().get(0).getId();
+                    Log.d("RecipeDetailActivity", "Found existing notification with ID: " + docId + ", updating timestamp");
+                    
+                    db.collection("notifications")
+                        .document(docId)
+                        .update("timestamp", System.currentTimeMillis(),
+                               "message", recipe.getRecipeName() + " planned for " + mealType + " on " + day,
+                               "read", false)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("RecipeDetailActivity", "✅ Notification updated with ID: " + docId);
+                            Toast.makeText(this, "Recipe reminder updated for " + mealType + " on " + day, Toast.LENGTH_SHORT).show();
+                            
+                            // Reload the NotificationsFragment if it's visible
+                            reloadNotificationsFragmentIfVisible();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("RecipeDetailActivity", "Error updating notification: " + e.getMessage(), e);
+                            Toast.makeText(this, "Error updating notification", Toast.LENGTH_SHORT).show();
+                        });
+                }
             })
             .addOnFailureListener(e -> {
-                Log.e("RecipeDetailActivity", "Error adding notification: " + e.getMessage());
+                Log.e("RecipeDetailActivity", "Error checking for existing notifications: " + e.getMessage(), e);
+                // Fallback to direct add if the query fails
+                db.collection("notifications")
+                    .add(notification)
+                    .addOnSuccessListener(documentReference -> {
+                        Log.d("RecipeDetailActivity", "✅ Notification added with ID: " + documentReference.getId() + " (fallback method)");
+                        Toast.makeText(this, "Recipe added to " + mealType + " on " + day, Toast.LENGTH_SHORT).show();
+                        
+                        // Reload the NotificationsFragment if it's visible
+                        reloadNotificationsFragmentIfVisible();
+                    })
+                    .addOnFailureListener(e2 -> {
+                        Log.e("RecipeDetailActivity", "Error adding notification: " + e2.getMessage(), e2);
+                        Toast.makeText(this, "Error adding notification", Toast.LENGTH_SHORT).show();
+                    });
             });
+    }
+    
+    /**
+     * Attempt to reload the NotificationsFragment if it's currently visible
+     */
+    private void reloadNotificationsFragmentIfVisible() {
+        try {
+            // Use a broadcast to notify any active fragments to reload their data
+            Intent intent = new Intent("edu.prakriti.mealmate.RELOAD_NOTIFICATIONS");
+            sendBroadcast(intent);
+            Log.d("RecipeDetailActivity", "Broadcast sent to reload notifications");
+        } catch (Exception e) {
+            Log.w("RecipeDetailActivity", "Failed to broadcast reload: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Show an instant notification to the user about the recipe reminder
+     */
+    private void showRecipeReminderNotification(String day, String mealType) {
+        try {
+            // For Android 13+, check permission before showing notification
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    Log.d("RecipeDetailActivity", "Cannot show notification: Permission not granted");
+                    // Don't show the notification if permission isn't granted
+                    return;
+                }
+            }
+            
+            // Get notification manager
+            android.app.NotificationManager notificationManager = 
+                    (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            
+            // Create notification channel for Android 8.0+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                android.app.NotificationChannel channel = new android.app.NotificationChannel(
+                        "meal_reminders",
+                        "Meal Reminders",
+                        android.app.NotificationManager.IMPORTANCE_DEFAULT);
+                channel.setDescription("Notifications for meal plan reminders");
+                notificationManager.createNotificationChannel(channel);
+            }
+            
+            // Create an intent for the notification to open the recipe detail
+            Intent intent = new Intent(this, RecipeDetailActivity.class);
+            intent.putExtra("RECIPE_ID", recipe.getRecipeId());
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            android.app.PendingIntent pendingIntent = android.app.PendingIntent.getActivity(
+                    this, 0, intent, android.app.PendingIntent.FLAG_IMMUTABLE);
+            
+            // Build the notification
+            androidx.core.app.NotificationCompat.Builder builder = 
+                    new androidx.core.app.NotificationCompat.Builder(this, "meal_reminders")
+                    .setSmallIcon(R.drawable.ic_bell)
+                    .setContentTitle("Recipe Added to Meal Plan")
+                    .setContentText(recipe.getRecipeName() + " has been added to " + mealType + " on " + day)
+                    .setStyle(new androidx.core.app.NotificationCompat.BigTextStyle()
+                            .bigText("Remember to cook " + recipe.getRecipeName() + " for " + 
+                                    mealType + " on " + day + ". Tap to view recipe details."))
+                    .setPriority(androidx.core.app.NotificationCompat.PRIORITY_DEFAULT)
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(true);
+            
+            // Generate a unique notification ID based on the current time
+            int notificationId = (int) System.currentTimeMillis() / 1000;
+            
+            // Show the notification
+            notificationManager.notify(notificationId, builder.build());
+            
+            Log.d("RecipeDetailActivity", "Instant notification shown for recipe: " + recipe.getRecipeName());
+        } catch (Exception e) {
+            Log.e("RecipeDetailActivity", "Error showing notification: " + e.getMessage(), e);
+        }
     }
 
     // Add a new method to fetch recipe data from Firestore by ID
@@ -1371,99 +1543,142 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 Log.d("RecipeDetailActivity", "Firestore query successful, document exists: " + documentSnapshot.exists());
                 
                 if (documentSnapshot.exists()) {
-                    Log.d("RecipeDetailActivity", "Recipe document data: " + documentSnapshot.getData());
-                    
-                    // Create Recipe object from document
-                    recipe = new Recipe();
-                    recipe.setRecipeId(recipeId);
-                    
-                    // Get basic data
-                    String name = documentSnapshot.getString("recipeName");
-                    String cookTime = documentSnapshot.getString("cookTime");
-                    String photoUrl = documentSnapshot.getString("photoUrl");
-                    Long timestamp = documentSnapshot.getLong("timestamp");
-                    
-                    Log.d("RecipeDetailActivity", "Basic recipe data - Name: " + name + 
-                            ", CookTime: " + cookTime + 
-                            ", PhotoUrl: " + (photoUrl != null ? "exists" : "null") + 
-                            ", Timestamp: " + timestamp);
-                    
-                    recipe.setRecipeName(name);
-                    recipe.setCookTime(cookTime);
-                    recipe.setPhotoUrl(photoUrl);
-                    recipe.setTimestamp(timestamp != null ? timestamp : System.currentTimeMillis());
-                    
-                    // Handle favorite flag
-                    if (documentSnapshot.contains("favorite")) {
-                        Boolean favorite = documentSnapshot.getBoolean("favorite");
-                        recipe.setFavorite(favorite != null ? favorite : false);
-                        Log.d("RecipeDetailActivity", "Recipe favorite status: " + recipe.isFavorite());
-                    }
-                    
-                    // Handle ingredients map
-                    Map<String, Object> rawIngredients = (Map<String, Object>) documentSnapshot.get("ingredients");
-                    Log.d("RecipeDetailActivity", "Raw ingredients map: " + (rawIngredients != null ? rawIngredients.keySet() : "null"));
-                    
-                    if (rawIngredients != null) {
+                    try {
+                        Log.d("RecipeDetailActivity", "Recipe document data: " + documentSnapshot.getData());
+                        
+                        // Log fields for debugging
+                        for (String field : documentSnapshot.getData().keySet()) {
+                            Log.d("RecipeDetailActivity", "Field: " + field + ", Type: " + 
+                                    (documentSnapshot.get(field) != null ? documentSnapshot.get(field).getClass().getSimpleName() : "null"));
+                        }
+                        
+                        // Create Recipe object from document
+                        recipe = new Recipe();
+                        recipe.setRecipeId(recipeId);
+                        
+                        // Get basic data with null checks
+                        String name = documentSnapshot.getString("recipeName");
+                        String cookTime = documentSnapshot.getString("cookTime");
+                        String photoUrl = documentSnapshot.getString("photoUrl");
+                        Long timestamp = documentSnapshot.getLong("timestamp");
+                        
+                        Log.d("RecipeDetailActivity", "Basic recipe data - Name: " + name + 
+                                ", CookTime: " + cookTime + 
+                                ", PhotoUrl: " + (photoUrl != null ? "exists" : "null") + 
+                                ", Timestamp: " + timestamp);
+                        
+                        // Set values with null checks
+                        recipe.setRecipeName(name != null ? name : "Unnamed Recipe");
+                        recipe.setCookTime(cookTime != null ? cookTime : "0");
+                        recipe.setPhotoUrl(photoUrl);
+                        recipe.setTimestamp(timestamp != null ? timestamp : System.currentTimeMillis());
+                        
+                        // Handle favorite flag
+                        if (documentSnapshot.contains("favorite")) {
+                            Boolean favorite = documentSnapshot.getBoolean("favorite");
+                            recipe.setFavorite(favorite != null ? favorite : false);
+                            Log.d("RecipeDetailActivity", "Recipe favorite status: " + recipe.isFavorite());
+                        }
+                        
+                        // Handle ingredients map
+                        Map<String, Object> rawIngredients = (Map<String, Object>) documentSnapshot.get("ingredients");
+                        Log.d("RecipeDetailActivity", "Raw ingredients map: " + (rawIngredients != null ? rawIngredients.keySet() : "null"));
+                        
                         Map<String, List<String>> processedIngredients = new HashMap<>();
                         
-                        for (Map.Entry<String, Object> entry : rawIngredients.entrySet()) {
-                            String category = entry.getKey();
-                            List<String> ingredientsList = (List<String>) entry.getValue();
-                            processedIngredients.put(category, ingredientsList);
-                            Log.d("RecipeDetailActivity", "Category: " + category + " with " + 
-                                    (ingredientsList != null ? ingredientsList.size() : 0) + " ingredients");
+                        if (rawIngredients != null) {
+                            for (Map.Entry<String, Object> entry : rawIngredients.entrySet()) {
+                                String category = entry.getKey();
+                                Object value = entry.getValue();
+                                
+                                // Handle different data types that might come from Firestore
+                                if (value instanceof List) {
+                                    List<String> ingredientsList = (List<String>) value;
+                                    processedIngredients.put(category, ingredientsList);
+                                    Log.d("RecipeDetailActivity", "Category: " + category + " with " + 
+                                            (ingredientsList != null ? ingredientsList.size() : 0) + " ingredients");
+                                } else if (value instanceof Map) {
+                                    // Handle if ingredients are stored in a Map format
+                                    Map<String, Object> ingredientsMap = (Map<String, Object>) value;
+                                    List<String> ingredientsList = new ArrayList<>();
+                                    
+                                    for (Object ingredient : ingredientsMap.values()) {
+                                        if (ingredient instanceof String) {
+                                            ingredientsList.add((String) ingredient);
+                                        }
+                                    }
+                                    
+                                    processedIngredients.put(category, ingredientsList);
+                                    Log.d("RecipeDetailActivity", "Category (from map): " + category + " with " + 
+                                            ingredientsList.size() + " ingredients");
+                                }
+                            }
+                        } else {
+                            Log.w("RecipeDetailActivity", "No ingredients found in recipe document");
                         }
                         
                         recipe.setIngredients(processedIngredients);
-                    } else {
-                        Log.w("RecipeDetailActivity", "No ingredients found in recipe document");
-                        recipe.setIngredients(new HashMap<>());
-                    }
-                    
-                    // Handle instructions list
-                    List<Map<String, Object>> instructionsList = (List<Map<String, Object>>) documentSnapshot.get("instructions");
-                    Log.d("RecipeDetailActivity", "Instructions list: " + 
-                            (instructionsList != null ? instructionsList.size() + " steps" : "null"));
-                    
-                    // More detailed logging of instructions format
-                    if (instructionsList != null && !instructionsList.isEmpty()) {
-                        for (int i = 0; i < instructionsList.size(); i++) {
-                            Map<String, Object> step = instructionsList.get(i);
-                            Log.d("RecipeDetailActivity", "Step " + i + ": " + step);
-                            // Check if step has the required fields
-                            if (step.containsKey("stepNumber") && step.containsKey("instruction")) {
-                                Log.d("RecipeDetailActivity", "  - Step " + step.get("stepNumber") + ": " + step.get("instruction"));
-                            } else {
-                                Log.w("RecipeDetailActivity", "  - Missing required fields in step: " + step.keySet());
+                        
+                        // Handle instructions list with better error handling
+                        List<Map<String, Object>> instructionsList = new ArrayList<>();
+                        Object rawInstructions = documentSnapshot.get("instructions");
+                        
+                        if (rawInstructions instanceof List) {
+                            List<?> rawList = (List<?>) rawInstructions;
+                            
+                            // Convert each item to a proper instruction map
+                            for (int i = 0; i < rawList.size(); i++) {
+                                Object item = rawList.get(i);
+                                Map<String, Object> instructionMap = new HashMap<>();
+                                
+                                if (item instanceof Map) {
+                                    // Standard format: map with stepNumber and instruction fields
+                                    Map<String, Object> itemMap = (Map<String, Object>) item;
+                                    instructionMap.put("stepNumber", itemMap.getOrDefault("stepNumber", (i+1)));
+                                    instructionMap.put("instruction", itemMap.getOrDefault("instruction", ""));
+                                } else if (item instanceof String) {
+                                    // Simple format: just strings in a list
+                                    instructionMap.put("stepNumber", i+1);
+                                    instructionMap.put("instruction", item);
+                                }
+                                
+                                instructionsList.add(instructionMap);
+                                Log.d("RecipeDetailActivity", "Processed instruction: " + instructionMap);
                             }
+                        } else {
+                            Log.w("RecipeDetailActivity", "Instructions not found or not in expected format");
                         }
-                    } else {
-                        Log.w("RecipeDetailActivity", "Instructions list is empty or null");
-                        // Initialize with empty list to avoid null pointer
-                        instructionsList = new ArrayList<>();
+                        
+                        recipe.setInstructions(instructionsList);
+                        
+                        // Log the created recipe object
+                        Log.d("RecipeDetailActivity", "Created Recipe object: " +
+                                "ID=" + recipe.getRecipeId() + 
+                                ", Name=" + recipe.getRecipeName() + 
+                                ", CookTime=" + recipe.getCookTime() + 
+                                ", PhotoUrl=" + (recipe.getPhotoUrl() != null ? "exists" : "null") +
+                                ", Ingredients count=" + (recipe.getIngredients() != null ? recipe.getIngredients().size() : 0) +
+                                ", Instructions count=" + (recipe.getInstructions() != null ? recipe.getInstructions().size() : 0));
+                        
+                        // Initialize UI with fetched recipe
+                        initializeRecipeUI();
+                        
+                        // Check if it's a favorite
+                        if (userId != null) {
+                            checkIfFavorite();
+                        }
+                        
+                        Log.d("RecipeDetailActivity", "Recipe loaded successfully: " + recipe.getRecipeName());
+                    } catch (Exception e) {
+                        Log.e("RecipeDetailActivity", "Error processing recipe data", e);
+                        showSnackbar("Error processing recipe data: " + e.getMessage());
+                        // Still try to show UI with whatever data we have
+                        if (recipe != null) {
+                            initializeRecipeUI();
+                        } else {
+                            finish();
+                        }
                     }
-                    
-                    recipe.setInstructions(instructionsList);
-                    
-                    // Log the created recipe object
-                    Log.d("RecipeDetailActivity", "Created Recipe object: " +
-                            "ID=" + recipe.getRecipeId() + 
-                            ", Name=" + recipe.getRecipeName() + 
-                            ", CookTime=" + recipe.getCookTime() + 
-                            ", PhotoUrl=" + (recipe.getPhotoUrl() != null ? "exists" : "null") +
-                            ", Ingredients count=" + (recipe.getIngredients() != null ? recipe.getIngredients().size() : 0) +
-                            ", Instructions count=" + (recipe.getInstructions() != null ? recipe.getInstructions().size() : 0));
-                    
-                    // Initialize UI with fetched recipe
-                    initializeRecipeUI();
-                    
-                    // Check if it's a favorite
-                    if (userId != null) {
-                        checkIfFavorite();
-                    }
-                    
-                    Log.d("RecipeDetailActivity", "Recipe loaded successfully: " + recipe.getRecipeName());
                 } else {
                     Log.e("RecipeDetailActivity", "Recipe document does not exist for ID: " + recipeId);
                     showSnackbar("Error: Recipe not found");
@@ -2249,5 +2464,46 @@ public class RecipeDetailActivity extends AppCompatActivity {
                     showSnackbar("Error updating recipe image: " + e.getMessage());
                 });
             });
+    }
+
+    /**
+     * Check for notification permission on Android 13+
+     */
+    private void checkNotificationPermission() {
+        // Only needed for Android 13+ (TIRAMISU)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                // Request permission
+                requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 100);
+            }
+        }
+    }
+    
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 100) {
+            // Check if the permission is granted
+            if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Log.d("RecipeDetailActivity", "Notification permission granted");
+            } else {
+                Log.d("RecipeDetailActivity", "Notification permission denied");
+                // Show a message to the user about missing notification permission
+                Toast.makeText(this, "Notification permission denied. You won't receive meal reminders.", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    /**
+     * Navigate to the notifications screen in the Dashboard
+     */
+    private void navigateToNotifications() {
+        Intent intent = new Intent(this, edu.prakriti.mealmate.home.DashboardActivity.class);
+        intent.putExtra("FRAGMENT_INDEX", 3); // Index for notifications fragment
+        
+        // Add transition animation
+        android.app.ActivityOptions options = android.app.ActivityOptions
+            .makeCustomAnimation(this, R.anim.slide_in_right, R.anim.slide_out_left);
+        startActivity(intent, options.toBundle());
     }
 }

@@ -161,12 +161,12 @@ public class NotificationsActivity extends AppCompatActivity {
         
         // After showing the debug notification, try to load from Firestore
         db.collection("notifications")
-            .whereEqualTo("userId", userId)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
+
             .get()
             .addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     Log.d(TAG, "loadNotifications: Successfully queried Firestore");
+
                     
                     // Clear the test notification if we get real data
                     if (!task.getResult().isEmpty()) {

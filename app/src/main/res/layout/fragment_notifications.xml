@@ -41,4 +41,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Debug button for testing notifications -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/debug_add_notification_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:contentDescription="Create test notification (debug)"
+        app:srcCompat="@drawable/ic_bell"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout> 

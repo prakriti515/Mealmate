@@ -432,4 +432,6 @@ public class GroceryDatabaseHelper extends SQLiteOpenHelper {
         return sdf.format(new Date(tomorrowMillis));
     }
 
+    public void removeGroceryItem(String itemName, String date) {
+    }
 }

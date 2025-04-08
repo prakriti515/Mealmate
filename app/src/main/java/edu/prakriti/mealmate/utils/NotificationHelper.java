@@ -128,6 +128,7 @@ public class NotificationHelper {
             Log.e(TAG, "Cannot create notification: User not logged in");
             return false;
         }
+
         
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference notificationRef = db.collection("notifications").document();

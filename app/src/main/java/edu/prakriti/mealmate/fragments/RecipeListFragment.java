@@ -16,32 +16,32 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import edu.prakriti.mealmate.R;
-import edu.prakriti.mealmate.adapters.RecipeAdapter;
-import edu.prakriti.mealmate.models.Recipe;
+import edu.prakriti.mealmate.adapters.RecipeCardAdapter;
+import edu.prakriti.mealmate.model.Recipe;
 import edu.prakriti.mealmate.util.SpacingItemDecoration;
+import edu.prakriti.mealmate.utils.FirestoreHelper;
 
 public class RecipeListFragment extends Fragment {
 
     private static final String TAG = "RecipeListFragment";
     
     private RecyclerView recyclerView;
-    private RecipeAdapter adapter;
+    private RecipeCardAdapter adapter;
     private List<Recipe> recipeList;
     private SearchView searchView;
     private ProgressBar loadingProgressBar;
     private TextView emptyView;
+    private FirestoreHelper firestoreHelper;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,7 +56,7 @@ public class RecipeListFragment extends Fragment {
         
         // Set up RecyclerView
         recyclerView = view.findViewById(R.id.recipe_recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
         
         // Initialize loading indicator and empty view
         loadingProgressBar = view.findViewById(R.id.loading_progress);
@@ -72,9 +72,12 @@ public class RecipeListFragment extends Fragment {
             Log.w(TAG, "Empty view not found in layout");
         }
         
-        // Initialize recipe list and adapter
+        // Initialize recipe list and Firebase helper
         recipeList = new ArrayList<>();
-        adapter = new RecipeAdapter(recipeList, getContext());
+        firestoreHelper = new FirestoreHelper();
+        
+        // Initialize adapter with empty list
+        adapter = new RecipeCardAdapter(getContext(), recipeList);
         recyclerView.setAdapter(adapter);
         
         // Add item decoration for spacing between cards
@@ -87,7 +90,7 @@ public class RecipeListFragment extends Fragment {
             setupSearchView();
         }
         
-        // Load recipes from Firebase
+        // Load recipes from Firebase using FirestoreHelper
         loadRecipesFromFirebase();
         
         return view;
@@ -139,75 +142,55 @@ public class RecipeListFragment extends Fragment {
     
     private void loadRecipesFromFirebase() {
         showLoading(true);
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
         
-        db.collection("recipes")
-            .orderBy("timestamp", Query.Direction.DESCENDING) // Order by latest timestamp first
-            .get()
-            .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    recipeList.clear();
-                    
-                    for (QueryDocumentSnapshot document : task.getResult()) {
-                        try {
-                            // Extract recipe data
-                            String id = document.getId();
-                            String name = document.getString("recipeName");
-                            String cookingTime = document.getString("cookTime");
-                            String photoUrl = document.getString("photoUrl");
+        firestoreHelper.loadRecipes(new FirestoreHelper.FirestoreCallback() {
+            @Override
+            public void onCallback(List<Recipe> recipes) {
+                recipeList.clear();
+                recipeList.addAll(recipes);
+                
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        // Update adapter with new data
+                        adapter.notifyDataSetChanged();
+                        
+                        // Show empty view if no recipes
+                        if (recipeList.isEmpty()) {
+                            showEmptyView(true);
+                        } else {
+                            showEmptyView(false);
                             
-                            // Create Recipe object and add to list
-                            Recipe recipe = new Recipe();
-                            recipe.setId(id);
-                            recipe.setName(name);
-                            recipe.setCookingTime(cookingTime);
-                            recipe.setImageUrl(photoUrl);
-                            
-                            // Add to list
-                            recipeList.add(recipe);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error parsing recipe: " + e.getMessage());
+                            // Debug log for the recipes loaded
+                            for (Recipe recipe : recipeList) {
+                                Log.d(TAG, "Loaded recipe: " + recipe.getRecipeName() + 
+                                        " (ID: " + recipe.getRecipeId() + ")");
+                            }
                         }
-                    }
-                    
-                    // Update RecyclerView
-                    adapter.updateList(recipeList);
-                    showLoading(false);
-                    
-                    // Show empty view if no recipes
-                    if (recipeList.isEmpty()) {
-                        showEmptyView(true);
-                    } else {
-                        showEmptyView(false);
-                    }
-                    
-                } else {
-                    Log.e(TAG, "Error getting recipes: ", task.getException());
-                    showLoading(false);
-                    showError("Error loading recipes. Please try again.");
+                        
+                        showLoading(false);
+                    });
                 }
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Failed to load recipes: " + e.getMessage());
-                showLoading(false);
-                showError("Failed to load recipes: " + e.getMessage());
-            });
+            }
+        });
     }
     
     private void showLoading(boolean isLoading) {
         if (loadingProgressBar != null) {
             loadingProgressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         }
-        if (recyclerView != null) {
-            recyclerView.setVisibility(isLoading ? View.GONE : View.VISIBLE);
+        
+        if (isLoading && recyclerView != null) {
+            recyclerView.setVisibility(View.GONE);
+        } else if (recyclerView != null) {
+            recyclerView.setVisibility(View.VISIBLE);
         }
     }
     
     private void showEmptyView(boolean isEmpty) {
         if (emptyView != null) {
             emptyView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
-            emptyView.setText("No recipes found. Add a recipe to get started!");
         }
+        
         if (recyclerView != null) {
             recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
         }
@@ -220,21 +203,27 @@ public class RecipeListFragment extends Fragment {
     }
     
     private void filterRecipes(String query) {
-        List<Recipe> filteredList = new ArrayList<>();
-        
         if (query == null || query.isEmpty()) {
-            filteredList.addAll(recipeList);
+            // If query is empty, show all recipes
+            if (adapter != null) {
+                adapter = new RecipeCardAdapter(getContext(), recipeList);
+                recyclerView.setAdapter(adapter);
+            }
         } else {
-            String lowerCaseQuery = query.toLowerCase();
+            // Filter recipes by name
+            List<Recipe> filteredList = new ArrayList<>();
+            String lowercaseQuery = query.toLowerCase();
             
             for (Recipe recipe : recipeList) {
-                if (recipe.getName().toLowerCase().contains(lowerCaseQuery)) {
+                if (recipe.getRecipeName().toLowerCase().contains(lowercaseQuery)) {
                     filteredList.add(recipe);
                 }
             }
+            
+            // Update adapter with filtered list
+            adapter = new RecipeCardAdapter(getContext(), filteredList);
+            recyclerView.setAdapter(adapter);
         }
-        
-        adapter.updateList(filteredList);
     }
     
     @Override

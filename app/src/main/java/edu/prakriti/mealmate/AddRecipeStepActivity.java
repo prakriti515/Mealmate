@@ -59,8 +59,8 @@ public class AddRecipeStepActivity extends AppCompatActivity implements
     private static final int TOTAL_STEPS = 3;
     
     // UI Components
-    private ViewPager2 viewPager;
-    private LinearProgressIndicator progressIndicator;
+    ViewPager2 viewPager;
+    LinearProgressIndicator progressIndicator;
     private TextView stepIndicator;
     private Button btnPrevious, btnNext;
     
@@ -314,7 +314,6 @@ public class AddRecipeStepActivity extends AppCompatActivity implements
     
     private void saveRecipeToFirestore(Map<String, Object> recipeData) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        
         // First add the recipe to the recipes collection
         db.collection("recipes")
                 .add(recipeData)

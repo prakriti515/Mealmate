@@ -82,7 +82,6 @@ public class ContactSelectionFragment extends Fragment {
 
         return view;
     }
-
     private void loadContacts() {
         contactList.clear();
         ContentResolver contentResolver = requireContext().getContentResolver();

@@ -44,6 +44,14 @@
             android:title="Profile"/>
     </group>
     
+    <group android:id="@+id/nav_settings_group" android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_dark_mode"
+            android:icon="@drawable/ic_dark_mode"
+            android:title="Dark Mode"
+            android:checkable="true"/>
+    </group>
+    
     <group android:id="@+id/nav_secondary_group">
         <item
             android:id="@+id/nav_sign_out"
